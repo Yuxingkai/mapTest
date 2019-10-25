@@ -10,23 +10,83 @@ export default {
   name: 'HelloWorld',
   data () {
     return {
-      msg: 'Welcome to Your Vue.js App'
+      msg: 'Welcome to Your Vue.js App',
+      imgUrl: require('../assets/smallP.gif'),
+      imgL: require('../assets/logo.png'),
+      globleMarkers: [],
+      bounseMarker: null
     }
   },
   methods: {
+    popInfo (e) {
+      let infoWindow = new AMap.InfoWindow({offset: new AMap.Pixel(0, -30)})
+      window.infoWindow = infoWindow
+      console.log(e.target.content)
+      infoWindow.setContent(e.target.content);
+      infoWindow.open(window.map, e.target.getPosition())
+    },
+    creatMarker (map) {
+      let markers = [];
+      let lineArr = d[0].path
+      let newArr = [[121.458509,31.166479],[121.457817,31.166369],[121.456642,31.166209],[121.455574,31.165965],[121.456057,31.165056],[121.456256,31.164643],[121.456519,31.164152],[121.456706,31.16378],[121.457178,31.16401],[121.457017,31.164501],[121.456894,31.165056],[121.456814,31.165428],[121.456261,31.165658]]
+      for (var i = 0; i < newArr.length; i++) {
+        var lnglat = newArr[i];
+        // 创建点实例
+        var marker = new AMap.Marker({
+          offset: new AMap.Pixel(-5, -5),
+          position: new AMap.LngLat(lnglat[0], lnglat[1]),
+          content: '<div style="width: 10px;height: 10px;border-radius: 5px;background: red"></div>',
+          extData: {
+            id: i + 1
+          }
+        });
+        marker.content= '坐标' + lnglat[0] + lnglat[1] + '<br>' + '<img style="width: 50px;height: 50px;" src="' + this.imgL + 'alt="">'
+        marker.on('click', this.popInfo)
+        markers.push(marker);
+        this.globleMarkers = markers
+      }
+
+      // 创建覆盖物群组，并将 marker 传给 OverlayGroup
+      var overlayGroups = new AMap.OverlayGroup(markers);
+
+      // 添加覆盖物群组
+      function addOverlayGroup() {
+
+        map.add(overlayGroups);
+      }
+      addOverlayGroup()
+    },
     init () {
       // 创建地图
       let map = new AMap.Map('mapUI', {
-        zoom: 4
+        zooms: [10, 20],
+        resizeEnable: true,
+        rotateEnable:true,
+        pitchEnable:false,
+        zoom: 18.4,
+        mapStyle: 'amap://styles/b0cb4e73e4bd6c0cf3aa8991b18388fd',
+        pitch:30,
+        viewMode:'3D',//开启3D视图,默认为关闭
+        expandZoomRange:true,
       })
+      let infoWindow = new AMap.InfoWindow({offset: new AMap.Pixel(0, -30)})
+      window.infoWindow = infoWindow
+      window.map = map
       let lineArr = d[0].path
-      let content = '<div class="markerimg">1111111</div>';
+      let setLocalArr = [[121.458509,31.166479],[121.457817,31.166369],[121.456642,31.166209],[121.455574,31.165965],[121.456057,31.165056],[121.456256,31.164643],[121.456519,31.164152],[121.456706,31.16378],[121.457178,31.16401],[121.457017,31.164501],[121.456894,31.165056],[121.456814,31.165428],[121.456261,31.165658]]
+      // lineArr[0] = [121.458353,31.166548]
+      console.log(lineArr[0])
+      if (setLocalArr[0][0] > setLocalArr[setLocalArr.length - 1][0]) {
+        this.imgUrl = require('../assets/transL.gif')
+      } else {
+        this.imgUrl = require('../assets/transR.gif')
+      }
       // 创建一个 Icon
       var startIcon = new AMap.Icon({
         // 图标尺寸
         size: new AMap.Size(50, 65),
         // 图标的取图地址
-        image: require('../assets/smallP.gif'),
+        image: this.imgUrl,
         // 图标所用图片大小
         imageSize: new AMap.Size(50, 55),
         // 图标取图偏移量
@@ -34,17 +94,18 @@ export default {
       });
       let marker = new AMap.Marker({
         map: map,
-        position: lineArr[0],
+        position: setLocalArr[0],
         // content: content,
         icon: startIcon,
         offset: new AMap.Pixel(-25, -25),
-        autoRotation: false,
-        angle:0,
+        autoRotation: true,
+        angle: 0,
       });
+      this.bounseMarker = marker
       // 绘制轨迹
       var polyline = new AMap.Polyline({
         map: map,
-        path: lineArr,
+        path: setLocalArr,
         showDir:true,
         strokeColor: "#28F",  //线颜色
         // strokeOpacity: 1,     //线透明度
@@ -61,15 +122,42 @@ export default {
         // strokeStyle: "solid"  //线样式
       });
 
-
-      marker.on('moving', function (e) {
+      marker.on('moving', (e) => {
         passedPolyline.setPath(e.passedPath);
+        console.log(e.passedPath)
+        // let content = '坐标' + e.passedPath[e.passedPath.length - 1].lng + e.passedPath[e.passedPath.length - 1].lat + '<br>' + '<img style="width: 50px;height: 50px;" src="' + this.imgL + 'alt="">'
+        // let lnglat = [121.457817,31.166369]
+        for (let i = 0; i < this.globleMarkers.length; i++) {
+          console.log(this.globleMarkers[i].getPosition())
+          if (e.passedPath[e.passedPath.length - 1].lng === this.globleMarkers[i].getPosition().lng && e.passedPath[e.passedPath.length - 1].lat === this.globleMarkers[i].getPosition().lat) {
+            this.bounseMarker.setAnimation('AMAP_ANIMATION_DROP')
+            window.infoWindow.setContent(this.globleMarkers[e.passedPath.length - 1].content);
+            window.infoWindow.open(window.map, [this.globleMarkers[i].getPosition().lng, this.globleMarkers[i].getPosition().lat])
+            setTimeout(() => {
+              window.infoWindow.close()
+            }, 1000)
+          }
+        }
+        // if (e.passedPath.length === 5) {
+        //   let i = 0
+        //   let time = setInterval(() => {
+        //     i++
+        //     if (i > 45) {
+        //       clearInterval(time)
+        //     } else {
+        //       window.map.setRotation(i)
+        //     }
+        //   }, 500)
+        // } else if (e.passedPath.length === 8) {
+        //   for (let i = 45; i < 90; i++) {
+        //     window.map.setRotation(i)
+        //   }
+        // }
       });
 
       map.setFitView();
-
       function startAnimation () {
-        marker.moveAlong(lineArr, 2000000);
+        marker.moveAlong(setLocalArr, 100,'' , false);
       }
 
       function pauseAnimation () {
@@ -83,7 +171,9 @@ export default {
       function stopAnimation () {
         marker.stopMove();
       }
+      this.creatMarker(map)
       startAnimation()
+      let that = this
       // AMapUI.load(['ui/misc/PathSimplifier', 'lib/$'], function (PathSimplifier, $) {
       //   if (!PathSimplifier.supportCanvas) {
       //     alert('当前环境不支持 Canvas！')
@@ -179,7 +269,7 @@ export default {
       //         width: 48,
       //         height: 48,
       //         // 使用图片
-      //         content: PathSimplifier.Render.Canvas.getImageContent(require('../assets/smallP.gif'), onload, onerror),
+      //         content: PathSimplifier.Render.Canvas.getImageContent(that.imgUrl, onload, onerror),
       //         strokeStyle: null,
       //         fillStyle: null,
       //         initRotateDegree: 90,
