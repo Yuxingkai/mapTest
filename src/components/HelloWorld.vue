@@ -65,6 +65,7 @@ export default {
         pitchEnable:false,
         zoom: 18.4,
         mapStyle: 'amap://styles/b0cb4e73e4bd6c0cf3aa8991b18388fd',
+        // mapStyle:'amap://styles/76a1adafcd53c65345db2b1c56c8cec2',
         pitch:30,
         viewMode:'3D',//开启3D视图,默认为关闭
         expandZoomRange:true,
@@ -72,14 +73,19 @@ export default {
       let infoWindow = new AMap.InfoWindow({offset: new AMap.Pixel(0, -30)})
       window.infoWindow = infoWindow
       window.map = map
+      // let i = 0.5
+      // setInterval(() => {
+      //   i += 0.5
+      //   window.map.setRotation(i)
+      // }, 100)
       let lineArr = d[0].path
       let setLocalArr = [[121.458509,31.166479],[121.457817,31.166369],[121.456642,31.166209],[121.455574,31.165965],[121.456057,31.165056],[121.456256,31.164643],[121.456519,31.164152],[121.456706,31.16378],[121.457178,31.16401],[121.457017,31.164501],[121.456894,31.165056],[121.456814,31.165428],[121.456261,31.165658]]
       // lineArr[0] = [121.458353,31.166548]
       console.log(lineArr[0])
       if (setLocalArr[0][0] > setLocalArr[setLocalArr.length - 1][0]) {
-        this.imgUrl = require('../assets/transL.gif')
-      } else {
         this.imgUrl = require('../assets/transR.gif')
+      } else {
+        this.imgUrl = require('../assets/transL.gif')
       }
       // 创建一个 Icon
       var startIcon = new AMap.Icon({
@@ -133,9 +139,9 @@ export default {
             this.bounseMarker.setAnimation('AMAP_ANIMATION_DROP')
             window.infoWindow.setContent(this.globleMarkers[e.passedPath.length - 1].content);
             window.infoWindow.open(window.map, [this.globleMarkers[i].getPosition().lng, this.globleMarkers[i].getPosition().lat])
-            setTimeout(() => {
-              window.infoWindow.close()
-            }, 1000)
+            // setTimeout(() => {
+            //   window.infoWindow.close()
+            // }, 1000)
           }
         }
         // if (e.passedPath.length === 5) {
