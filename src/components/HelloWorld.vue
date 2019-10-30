@@ -14,16 +14,47 @@ export default {
       imgUrl: require('../assets/smallP.gif'),
       imgL: require('../assets/logo.png'),
       globleMarkers: [],
-      bounseMarker: null
+      bounseMarker: null,
+      rotatedInterval: null
     }
   },
   methods: {
     popInfo (e) {
+      // var info = [];
+      // info.push("<div class='input-card content-window-card'><div><img style=\"float:left;\" src=\" https://webapi.amap.com/images/autonavi.png \"/></div> ");
+      // info.push("<div style=\"padding:7px 0px 0px 0px;\"><h4>高德软件</h4>");
+      // info.push("<p class='input-item'>电话 : 010-84107000   邮编 : 100102</p>");
+      // info.push("<p class='input-item'>地址 :北京市朝阳区望京阜荣街10号首开广场4层</p></div></div>");
+      // content: info.join("")  //使用默认信息窗体框样式，显示信息内容
       let infoWindow = new AMap.InfoWindow({offset: new AMap.Pixel(0, -30)})
       window.infoWindow = infoWindow
       console.log(e.target.content)
       infoWindow.setContent(e.target.content);
       infoWindow.open(window.map, e.target.getPosition())
+    },
+    updateContent () {
+
+      if (!marker) {
+        return;
+      }
+
+      // 自定义点标记内容
+      var markerContent = document.createElement("div");
+
+
+      // 点标记中的文本
+      var markerSpan = document.createElement("span");
+      markerSpan.className = 'marker';
+      markerSpan.innerHTML = "Hi，我被更新啦！";
+      markerContent.appendChild(markerSpan);
+
+      var markerSpan1 = document.createElement("span");
+      markerSpan1.className = 'span';
+      markerSpan1.innerHTML = "close";
+      markerContent.appendChild(markerSpan1);
+      markerSpan1.onclick = pop
+      marker.setContent(markerContent); //更新点标记内容
+      marker.setPosition([116.391467, 39.927761]); //更新点标记位置
     },
     creatMarker (map) {
       let markers = [];
@@ -56,6 +87,20 @@ export default {
       }
       addOverlayGroup()
     },
+    startRotation (speed) {
+      let second = 0
+      this.rotatedInterval = setInterval(() => {
+        let angle = 3.6 / speed * second
+        if (angle > 360) {
+          second = 0
+        }
+        window.map.setRotation(angle)
+        second++
+      }, 10)
+    },
+    stopRotation () {
+      clearInterval(this.rotatedInterval)
+    },
     init () {
       // 创建地图
       let map = new AMap.Map('mapUI', {
@@ -73,15 +118,10 @@ export default {
       let infoWindow = new AMap.InfoWindow({offset: new AMap.Pixel(0, -30)})
       window.infoWindow = infoWindow
       window.map = map
-      // let i = 0.5
-      // setInterval(() => {
-      //   i += 0.5
-      //   window.map.setRotation(i)
-      // }, 100)
+      // this.startRotation(15)
       let lineArr = d[0].path
       let setLocalArr = [[121.458509,31.166479],[121.457817,31.166369],[121.456642,31.166209],[121.455574,31.165965],[121.456057,31.165056],[121.456256,31.164643],[121.456519,31.164152],[121.456706,31.16378],[121.457178,31.16401],[121.457017,31.164501],[121.456894,31.165056],[121.456814,31.165428],[121.456261,31.165658]]
       // lineArr[0] = [121.458353,31.166548]
-      console.log(lineArr[0])
       if (setLocalArr[0][0] > setLocalArr[setLocalArr.length - 1][0]) {
         this.imgUrl = require('../assets/transR.gif')
       } else {
@@ -130,18 +170,12 @@ export default {
 
       marker.on('moving', (e) => {
         passedPolyline.setPath(e.passedPath);
-        console.log(e.passedPath)
-        // let content = '坐标' + e.passedPath[e.passedPath.length - 1].lng + e.passedPath[e.passedPath.length - 1].lat + '<br>' + '<img style="width: 50px;height: 50px;" src="' + this.imgL + 'alt="">'
-        // let lnglat = [121.457817,31.166369]
         for (let i = 0; i < this.globleMarkers.length; i++) {
-          console.log(this.globleMarkers[i].getPosition())
           if (e.passedPath[e.passedPath.length - 1].lng === this.globleMarkers[i].getPosition().lng && e.passedPath[e.passedPath.length - 1].lat === this.globleMarkers[i].getPosition().lat) {
             this.bounseMarker.setAnimation('AMAP_ANIMATION_DROP')
+            //  只展示单个
             window.infoWindow.setContent(this.globleMarkers[e.passedPath.length - 1].content);
             window.infoWindow.open(window.map, [this.globleMarkers[i].getPosition().lng, this.globleMarkers[i].getPosition().lat])
-            // setTimeout(() => {
-            //   window.infoWindow.close()
-            // }, 1000)
           }
         }
         // if (e.passedPath.length === 5) {
