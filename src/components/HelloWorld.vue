@@ -15,10 +15,49 @@ export default {
       imgL: require('../assets/logo.png'),
       globleMarkers: [],
       bounseMarker: null,
-      rotatedInterval: null
+      rotatedInterval: null,
+      globalRandomData: [
+        {'lng':121.458509,'lat':31.166479,'count':100},
+        {'lng':121.457817,'lat':31.166369,'count':110},
+        {'lng':121.456642,'lat':31.166209,'count':120},
+        {'lng':121.455574,'lat':31.165965,'count':130},
+        {'lng':121.456057,'lat':31.165056,'count':140},
+        {'lng':121.456256,'lat':31.164643,'count':150},
+        {'lng':121.456261,'lat':31.165658,'count':160}
+      ]
     }
   },
   methods: {
+    getData (map) {
+      setInterval(() => {
+        for (let i = 0; i < this.globalRandomData.length; i++) {
+          this.globalRandomData[i].count = Math.ceil(Math.random()*100) * 100
+        }
+        console.log(this.globalRandomData)
+        this.creatHeatMap(map)
+      }, 3000)
+    },
+    // 热力图
+    creatHeatMap (map) {
+      var heatmap
+      // let points =[
+      //   {'lng':121.458509,'lat':31.166479,'count':100},
+      //   {'lng':121.457817,'lat':31.166369,'count':110},
+      //   {'lng':121.456642,'lat':31.166209,'count':120},
+      //   {'lng':121.455574,'lat':31.165965,'count':130},
+      //   {'lng':121.456057,'lat':31.165056,'count':140},
+      //   {'lng':121.456256,'lat':31.164643,'count':150},
+      //   {'lng':121.456261,'lat':31.165658,'count':160}
+      // ];
+      map.plugin(['AMap.Heatmap'],() => {      //加载热力图插件
+        heatmap = new AMap.Heatmap(map, {
+          radius: 25, //给定半径
+          opacity: [0, 0.8],
+        });    //在地图对象叠加热力图
+        heatmap.setDataSet({data: this.globalRandomData,max:100}); //设置热力图数据集
+        //具体参数见接口文档
+      })
+    },
     popInfo (e) {
       // var info = [];
       // info.push("<div class='input-card content-window-card'><div><img style=\"float:left;\" src=\" https://webapi.amap.com/images/autonavi.png \"/></div> ");
@@ -91,11 +130,11 @@ export default {
       let second = 0
       this.rotatedInterval = setInterval(() => {
         let angle = 3.6 / speed * second
-        if (angle > 360) {
+        if (angle < -360) {
           second = 0
         }
         window.map.setRotation(angle)
-        second++
+        second--
       }, 10)
     },
     stopRotation () {
@@ -213,6 +252,8 @@ export default {
       }
       this.creatMarker(map)
       startAnimation()
+      // this.creatHeatMap(map)
+      // this.getData(map)
       let that = this
       // AMapUI.load(['ui/misc/PathSimplifier', 'lib/$'], function (PathSimplifier, $) {
       //   if (!PathSimplifier.supportCanvas) {
